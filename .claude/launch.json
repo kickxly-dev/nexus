@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nexus-ui",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd renderer && npx vite --port 5173"],
+      "port": 5173
+    },
+    {
+      "name": "nexus-backend",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["backend/main.py"],
+      "port": 7331
+    }
+  ]
+}

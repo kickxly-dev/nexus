@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(tasklist)",
+      "Bash(mkdir -p ~/.claude/channels/telegram/approved)",
+      "Bash(~/.claude/channels/telegram/approved/7984109513)",
+      "Bash(npm install:*)",
+      "Bash(npm create:*)",
+      "Bash(pip install:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npm:*)",
+      "Bash(node -e \"require\\(''''./electron/pythonBridge.js''''\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-nmap==0.7.1
+dnspython==2.6.1
+httpx==0.26.0
+scapy==2.5.0
+python-whois==0.9.4
+beautifulsoup4==4.12.3
+aiofiles==23.2.1
+passlib==1.7.4
+requests==2.31.0

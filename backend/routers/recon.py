@@ -6,6 +6,8 @@ from modules.recon.whois_lookup import whois_lookup
 from modules.recon.port_scanner import port_scan
 from modules.recon.subdomain import enumerate_subdomains
 from modules.recon.tech_fingerprint import fingerprint
+from modules.recon.reverse_dns import reverse_dns
+from modules.recon.ip_geolocation import ip_geolocation
 
 router = APIRouter(prefix="/api/recon", tags=["recon"])
 
@@ -45,3 +47,13 @@ async def subdomains(
 async def tech_fingerprint(url: str = Query(...)):
     url = validate_url(url)
     return stream_response(fingerprint(url))
+
+
+@router.get("/reversedns")
+async def rev_dns(ip: str = Query(...)):
+    return stream_response(reverse_dns(ip))
+
+
+@router.get("/geoip")
+async def geoip(ip: str = Query(...)):
+    return stream_response(ip_geolocation(ip))

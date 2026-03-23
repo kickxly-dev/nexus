@@ -52,3 +52,36 @@ This project uses **Tailwind v4** with CSS-based config. Do NOT use `tailwind.co
 2. Add endpoint in `backend/routers/{category}.py` calling `stream(newtool(args))`
 3. Add tool entry to the `TOOLS` array in the corresponding page component
 4. Add config inputs and wire up the `run()` function with the endpoint path
+
+## Streaming: GET vs POST
+
+- Use `useStream.start(path, params)` for GET tools (EventSource) — query params only, no body
+- Use `useStream.startPost(path, body)` for POST tools (fetch ReadableStream) — required when sending arrays or large payloads (e.g., wordlists, credential lists)
+- Both parse `data: {json}\n\n` lines identically; choose based on whether the tool needs a request body
+
+## Input Validation
+
+All backend inputs must go through `backend/utils/validator.py` before use:
+- `validate_domain()` — strips protocol, validates format
+- `validate_url()` — adds `https://` if missing
+- `validate_ip_or_cidr()` — for network tools
+- `validate_port_range()` — accepts comma/dash syntax (e.g., `80,443,8000-9000`)
+- `validate_hash()` — allows hex + special chars for bcrypt/argon2/etc.
+
+## All 22 tools wired
+
+All modules are exposed via routes. New in v1.1.0:
+- `GET /api/recon/reversedns?ip=` — calls `reverse_dns(ip)`
+- `GET /api/recon/geoip?ip=` — calls `ip_geolocation(ip)`
+- `GET /api/web/cors?url=` — calls `cors_checker(url)`
+- `GET /api/password/encode?text=` — calls `encoder(text)`
+- `GET /api/password/strength?password=` — calls `password_strength(password)`
+
+## StreamOutput Line Types
+
+The `StreamOutput` component colors lines by `type` field:
+`found` (green), `vuln` (red), `warn` (yellow), `error` (red/dim), `done` (blue), `progress` (blue/dim), `info` (white/dim), `data`/`result` (white)
+
+## Exporter Utility
+
+`backend/utils/exporter.py` provides `to_json()`, `to_csv()`, `to_txt()` — not currently called server-side. Export is handled client-side via `ExportButton` in `renderer/src/components/Forms/index.jsx` using `window.nexus.saveFile()` (Electron) or blob download (browser).

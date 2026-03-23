@@ -7,6 +7,8 @@ from modules.password.hash_identifier import identify_hash
 from modules.password.hash_cracker import crack_hash
 from modules.password.wordlist_gen import generate_wordlist
 from modules.password.credential_tester import test_credentials
+from modules.password.encoder import encoder
+from modules.password.password_strength import password_strength
 
 router = APIRouter(prefix="/api/password", tags=["password"])
 
@@ -67,3 +69,13 @@ async def credentials(req: CredRequest):
         req.success_pattern, req.success_status, req.delay,
         req.form_user_field, req.form_pass_field
     ))
+
+
+@router.get("/encode")
+async def encode(text: str = Query(...)):
+    return stream_response(encoder(text))
+
+
+@router.get("/strength")
+async def strength(password: str = Query(...)):
+    return stream_response(password_strength(password))

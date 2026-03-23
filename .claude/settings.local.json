@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": [
+    "bypassPermissions": [
       "Bash(chmod:*)",
       "Bash(tasklist)",
       "Bash(mkdir -p ~/.claude/channels/telegram/approved)",

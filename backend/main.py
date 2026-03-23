@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from config import PORT
-from routers import recon, webexploit, network, password
+from routers import recon, webexploit, network, password, osint
 
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.include_router(recon.router)
 app.include_router(webexploit.router)
 app.include_router(network.router)
 app.include_router(password.router)
+app.include_router(osint.router)
 
 
 @app.get("/health")

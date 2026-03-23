@@ -1,6 +1,6 @@
 {
   "name": "nexus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "All-in-one security toolkit",
   "private": true,
   "main": "electron/main.js",
@@ -9,7 +9,9 @@
     "dev:renderer": "cd renderer && npm run dev",
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "build": "cd renderer && npm run build && cd .. && electron-builder",
-    "install:all": "npm install && cd renderer && npm install"
+    "build:win": "cd renderer && npm run build && cd .. && electron-builder --win",
+    "install:all": "npm install && cd renderer && npm install",
+    "pack": "electron-builder --dir"
   },
   "dependencies": {
     "electron-is-dev": "^2.0.0"
@@ -23,19 +25,38 @@
   "build": {
     "appId": "com.nexus.security",
     "productName": "Nexus",
+    "copyright": "Nexus Security Toolkit — Authorized Use Only",
     "directories": {
-      "output": "dist"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "electron/**/*",
       "renderer/dist/**/*",
-      "backend/**/*"
+      "!node_modules"
     ],
     "extraResources": [
       {
         "from": "backend",
-        "to": "backend"
+        "to": "backend",
+        "filter": ["**/*", "!**/__pycache__/**", "!**/*.pyc", "!.venv/**"]
       }
-    ]
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nexus"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }

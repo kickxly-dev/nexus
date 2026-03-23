@@ -4,11 +4,13 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useApi } from '../../hooks/useApi'
 
 const PAGE_NAMES = {
-  '/':         'Dashboard',
-  '/recon':    'Reconnaissance',
-  '/web':      'Web Exploitation',
-  '/network':  'Network Analysis',
-  '/password': 'Password & Auth',
+  '/':          'Dashboard',
+  '/recon':     'Reconnaissance',
+  '/web':       'Web Exploitation',
+  '/network':   'Network Analysis',
+  '/password':  'Password & Auth',
+  '/osint':     'OSINT',
+  '/settings':  'Settings',
 }
 
 const PAGE_COLORS = {
@@ -16,6 +18,8 @@ const PAGE_COLORS = {
   '/web':      { from: '#a855f7', to: '#7c3aed' },
   '/network':  { from: '#6366f1', to: '#4f46e5' },
   '/password': { from: '#06b6d4', to: '#3b82f6' },
+  '/osint':    { from: '#818cf8', to: '#7c3aed' },
+  '/settings': { from: '#a78bfa', to: '#60a5fa' },
 }
 
 export function Topbar() {

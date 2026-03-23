@@ -3,7 +3,7 @@ const path = require('path');
 const { startPython, stopPython, getPythonPort } = require('./pythonBridge');
 const { registerIpcHandlers } = require('./ipcHandlers');
 
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+const isDev = !app.isPackaged;
 
 let mainWindow;
 
@@ -23,11 +23,10 @@ async function createWindow() {
     },
   });
 
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-  } else {
+  mainWindow.webContents.openDevTools();
+  mainWindow.loadURL('http://localhost:5173').catch(() => {
     mainWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
-  }
+  });
 
   mainWindow.on('closed', () => { mainWindow = null; });
 }

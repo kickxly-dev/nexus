@@ -3,11 +3,14 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Sidebar } from './components/Layout/Sidebar'
 import { Topbar } from './components/Layout/Topbar'
 import { LoadingScreen } from './components/LoadingScreen'
+import { MaintenanceScreen } from './components/MaintenanceScreen'
 import { Dashboard } from './pages/Dashboard'
 import { Recon } from './pages/Recon'
 import { WebExploit } from './pages/WebExploit'
 import { Network } from './pages/Network'
 import { PasswordAuth } from './pages/PasswordAuth'
+import { OSINT } from './pages/OSINT'
+import { Settings } from './pages/Settings'
 import { AdminPanel } from './pages/AdminPanel'
 import { useSettingsStore } from './store/settingsStore'
 import { useLogStore } from './store/logStore'
@@ -22,8 +25,8 @@ function RouteLogger() {
 }
 
 export default function App() {
-  const { setPort, setPlatform } = useSettingsStore()
-  const [loading, setLoading] = useState(true)
+  const { setPort, setPlatform, maintenanceMode } = useSettingsStore()
+  const [loading, setLoading]     = useState(true)
   const [showAdmin, setShowAdmin] = useState(false)
   const addLog = useLogStore((s) => s.addLog)
 
@@ -51,7 +54,6 @@ export default function App() {
     init()
   }, [])
 
-  // Hidden admin panel shortcut: Ctrl+Shift+A
   useEffect(() => {
     function handleKey(e) {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
@@ -75,14 +77,18 @@ export default function App() {
           <Topbar />
           <div className="flex flex-1 overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-hidden bg-[#09090b]">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/recon" element={<Recon />} />
-                <Route path="/web" element={<WebExploit />} />
-                <Route path="/network" element={<Network />} />
-                <Route path="/password" element={<PasswordAuth />} />
-              </Routes>
+            <main className="flex-1 overflow-hidden" style={{ background: '#08080f' }}>
+              {maintenanceMode ? <MaintenanceScreen /> : (
+                <Routes>
+                  <Route path="/"         element={<Dashboard />} />
+                  <Route path="/recon"    element={<Recon />} />
+                  <Route path="/web"      element={<WebExploit />} />
+                  <Route path="/network"  element={<Network />} />
+                  <Route path="/password" element={<PasswordAuth />} />
+                  <Route path="/osint"    element={<OSINT />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              )}
             </main>
           </div>
         </div>

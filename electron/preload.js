@@ -20,4 +20,13 @@ contextBridge.exposeInMainWorld('nexus', {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
+
+  // Auto-updater
+  updateDownload: () => ipcRenderer.invoke('update-download'),
+  updateInstall:  () => ipcRenderer.invoke('update-install'),
+  updateCheck:    () => ipcRenderer.invoke('update-check'),
+  onUpdateStatus: (cb) => {
+    ipcRenderer.on('update-status', (_, data) => cb(data));
+    return () => ipcRenderer.removeAllListeners('update-status');
+  },
 });

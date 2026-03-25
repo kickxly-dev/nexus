@@ -1,6 +1,6 @@
 {
   "name": "nexus",
-  "version": "1.1.0",
+  "version": "1.6.0",
   "description": "All-in-one security toolkit",
   "private": true,
   "main": "electron/main.js",
@@ -14,7 +14,8 @@
     "pack": "electron-builder --dir"
   },
   "dependencies": {
-    "electron-is-dev": "^2.0.0"
+    "electron-is-dev": "^2.0.0",
+    "electron-updater": "^6.8.3"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
@@ -30,33 +31,53 @@
       "output": "release",
       "buildResources": "build"
     },
+    "asar": true,
+    "asarUnpack": [],
     "files": [
       "electron/**/*",
-      "renderer/dist/**/*",
-      "!node_modules"
+      "renderer/dist/**/*"
     ],
     "extraResources": [
       {
-        "from": "backend",
-        "to": "backend",
-        "filter": ["**/*", "!**/__pycache__/**", "!**/*.pyc", "!.venv/**"]
+        "from": "backend/dist/nexus-backend.exe",
+        "to": "backend/nexus-backend.exe"
+      },
+      {
+        "from": "backend/data",
+        "to": "backend/data"
       }
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Nexus"
+      "shortcutName": "Nexus",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     },
     "mac": {
       "target": "dmg"
     },
     "linux": {
       "target": "AppImage"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "kickxly-dev",
+      "repo": "nexus"
     }
   }
 }

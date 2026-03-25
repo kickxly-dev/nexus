@@ -25,14 +25,22 @@ async function startPython(onEvent) {
   currentPort = port;
 
   const isDev = process.env.NODE_ENV === 'development' || !require('electron').app.isPackaged;
-  const backendPath = isDev
-    ? path.join(__dirname, '../backend/main.py')
-    : path.join(process.resourcesPath, 'backend/main.py');
 
-  const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+  let cmd, args;
+  if (isDev) {
+    // Development: run Python source directly
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    cmd = pythonCmd;
+    args = [path.join(__dirname, '../backend/main.py')];
+  } else {
+    // Production: run PyInstaller-compiled executable (no Python install needed)
+    const exeName = process.platform === 'win32' ? 'nexus-backend.exe' : 'nexus-backend';
+    cmd = path.join(process.resourcesPath, 'backend', exeName);
+    args = [];
+  }
 
   return new Promise((resolve, reject) => {
-    pythonProcess = spawn(pythonCmd, [backendPath], {
+    pythonProcess = spawn(cmd, args, {
       env: { ...process.env, NEXUS_PORT: String(port) },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

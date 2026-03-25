@@ -9,6 +9,8 @@ from modules.password.wordlist_gen import generate_wordlist
 from modules.password.credential_tester import test_credentials
 from modules.password.encoder import encoder
 from modules.password.password_strength import password_strength
+from modules.password.hash_lookup import hash_lookup
+from modules.password.jwt_cracker import jwt_crack
 
 router = APIRouter(prefix="/api/password", tags=["password"])
 
@@ -79,3 +81,14 @@ async def encode(text: str = Query(...)):
 @router.get("/strength")
 async def strength(password: str = Query(...)):
     return stream_response(password_strength(password))
+
+
+@router.get("/hashlookup")
+async def hashlookup(hash: str = Query(...)):
+    h = validate_hash(hash)
+    return stream_response(hash_lookup(h))
+
+
+@router.get("/jwtcrack")
+async def jwtcrack(token: str = Query(...)):
+    return stream_response(jwt_crack(token))

@@ -12,8 +12,15 @@ import { PasswordAuth } from './pages/PasswordAuth'
 import { OSINT } from './pages/OSINT'
 import { Settings } from './pages/Settings'
 import { AdminPanel } from './pages/AdminPanel'
+import { Advanced } from './pages/Advanced'
 import { useSettingsStore } from './store/settingsStore'
 import { useLogStore } from './store/logStore'
+import { useAuthStore } from './store/authStore'
+import { LoginPage } from './pages/LoginPage'
+import { UpdateBanner } from './components/UpdateBanner'
+import { Toasts } from './components/Toasts'
+import { CommandPalette } from './components/CommandPalette'
+import { DepChecker } from './components/DepChecker'
 
 function RouteLogger() {
   const location = useLocation()
@@ -26,9 +33,11 @@ function RouteLogger() {
 
 export default function App() {
   const { setPort, setPlatform, maintenanceMode } = useSettingsStore()
-  const [loading, setLoading]     = useState(true)
-  const [showAdmin, setShowAdmin] = useState(false)
+  const [loading, setLoading]         = useState(true)
+  const [showAdmin, setShowAdmin]     = useState(false)
+  const [showPalette, setShowPalette] = useState(false)
   const addLog = useLogStore((s) => s.addLog)
+  const currentUser = useAuthStore((s) => s.currentUser)
 
   useEffect(() => {
     async function init() {
@@ -61,12 +70,18 @@ export default function App() {
         setShowAdmin((v) => !v)
         addLog('admin_toggle', { detail: 'Admin panel toggled' })
       }
+      if (e.ctrlKey && !e.shiftKey && e.key === 'k') {
+        e.preventDefault()
+        setShowPalette((v) => !v)
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
   const handleLoadingComplete = useCallback(() => setLoading(false), [])
+
+  if (!currentUser) return <LoginPage onAuth={() => {}} />
 
   return (
     <>
@@ -75,6 +90,7 @@ export default function App() {
         <RouteLogger />
         <div className={`flex flex-col h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
           <Topbar />
+          <DepChecker />
           <div className="flex flex-1 overflow-hidden">
             <Sidebar />
             <main className="flex-1 overflow-hidden" style={{ background: '#08080f' }}>
@@ -87,12 +103,16 @@ export default function App() {
                   <Route path="/password" element={<PasswordAuth />} />
                   <Route path="/osint"    element={<OSINT />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/advanced" element={<Advanced />} />
                 </Routes>
               )}
             </main>
           </div>
         </div>
         {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+        {showPalette && <CommandPalette onClose={() => setShowPalette(false)} />}
+        <UpdateBanner />
+        <Toasts />
       </HashRouter>
     </>
   )

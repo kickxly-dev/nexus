@@ -1,118 +1,193 @@
-const inputCls = `w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-white/90
-  text-[12px] placeholder-white/12 transition-all duration-200 disabled:opacity-30
-  hover:border-purple-500/20 focus:bg-white/[0.04]`
+import { Icon } from '../Icons'
 
+/* ─── Shared base styles ────────────────────────────── */
+const inputBase = {
+  width: '100%',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--r-md)',
+  color: 'var(--text-1)',
+  fontSize: 12,
+  fontFamily: 'inherit',
+  letterSpacing: '-0.012em',
+  padding: '7px 10px',
+  transition: 'border-color 0.12s, box-shadow 0.12s',
+}
+
+const labelStyle = {
+  display: 'block',
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'var(--text-4)',
+  marginBottom: 5,
+}
+
+/* ─── InputField ─────────────────────────────────────── */
 export function InputField({ label, value, onChange, placeholder, type = 'text', disabled }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && <label className="text-white/25 text-[11px] font-medium tracking-wide">{label}</label>}
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder} disabled={disabled} className={inputCls} />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {label && <label style={labelStyle}>{label}</label>}
+      <input
+        type={type} value={value} placeholder={placeholder} disabled={disabled}
+        onChange={e => onChange(e.target.value)}
+        style={{ ...inputBase, opacity: disabled ? 0.35 : 1 }}
+      />
     </div>
   )
 }
 
+/* ─── SelectField ────────────────────────────────────── */
 export function SelectField({ label, value, onChange, options, disabled }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && <label className="text-white/25 text-[11px] font-medium tracking-wide">{label}</label>}
-      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}
-        className={inputCls + ' cursor-pointer appearance-none'}>
-        {options.map((opt) => (
-          <option key={opt.value ?? opt} value={opt.value ?? opt} className="bg-[#0f0f1a]">
-            {opt.label ?? opt}
-          </option>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {label && <label style={labelStyle}>{label}</label>}
+      <select
+        value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
+        style={{
+          ...inputBase, cursor: 'pointer', appearance: 'none',
+          opacity: disabled ? 0.35 : 1,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23303065' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', paddingRight: 30,
+        }}>
+        {options.map(opt => (
+          <option key={opt.value ?? opt} value={opt.value ?? opt}>{opt.label ?? opt}</option>
         ))}
       </select>
     </div>
   )
 }
 
+/* ─── RunButton ──────────────────────────────────────── */
 export function RunButton({ onClick, running, onStop, disabled }) {
+  if (running) return (
+    <button onClick={onStop} style={{
+      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      padding: '10px 0', borderRadius: 'var(--r-md)', fontSize: 12, fontWeight: 600,
+      background: 'rgba(255,71,87,0.08)', color: 'var(--red)',
+      border: '1px solid rgba(255,71,87,0.25)', cursor: 'pointer',
+      transition: 'all 0.15s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.15)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(255,71,87,0.2)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.08)'; e.currentTarget.style.boxShadow = 'none' }}>
+      <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--red)', flexShrink: 0 }} />
+      Stop Scan
+    </button>
+  )
   return (
-    <button
-      onClick={running ? onStop : onClick}
-      disabled={disabled && !running}
-      className="w-full px-4 py-2.5 rounded-lg text-[12px] font-semibold tracking-wide transition-all duration-200 relative overflow-hidden group disabled:opacity-20 disabled:cursor-not-allowed"
-      style={running
-        ? { background: 'rgba(239,68,68,0.08)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
-        : { background: 'linear-gradient(135deg, #7c3aed, #2563eb)', color: 'white', boxShadow: '0 4px 20px rgba(124,58,237,0.25), 0 2px 8px rgba(37,99,235,0.15)' }
-      }
-    >
-      {!running && (
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08), transparent)' }} />
-      )}
-      <span className="relative">{running ? '⏹ Stop' : '▶ Run Scan'}</span>
+    <button onClick={onClick} disabled={disabled} style={{
+      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      padding: '10px 0', borderRadius: 'var(--r-md)', fontSize: 12, fontWeight: 600,
+      background: disabled
+        ? 'rgba(124,58,237,0.12)'
+        : 'linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%)',
+      color: disabled ? 'rgba(167,139,250,0.25)' : 'white',
+      border: disabled ? '1px solid rgba(124,58,237,0.2)' : '1px solid rgba(139,92,246,0.4)',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      boxShadow: disabled ? 'none' : '0 4px 24px rgba(124,58,237,0.45), 0 2px 8px rgba(0,0,0,0.4)',
+      transition: 'all 0.15s',
+      letterSpacing: '0.01em',
+    }}
+      onMouseEnter={e => {
+        if (!disabled) {
+          e.currentTarget.style.boxShadow = '0 6px 32px rgba(124,58,237,0.65), 0 2px 8px rgba(0,0,0,0.5)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }
+      }}
+      onMouseLeave={e => {
+        if (!disabled) {
+          e.currentTarget.style.boxShadow = '0 4px 24px rgba(124,58,237,0.45), 0 2px 8px rgba(0,0,0,0.4)'
+          e.currentTarget.style.transform = 'none'
+        }
+      }}>
+      <Icon name="play" size={11} />
+      Run Scan
     </button>
   )
 }
 
+/* ─── ExportButton ───────────────────────────────────── */
 export function ExportButton({ lines, filename = 'nexus-export' }) {
-  if (!lines?.length) return null
-  async function exportData(format) {
+  if (!lines?.length) return <span />
+  async function go(fmt) {
     let data, ext
-    if (format === 'json') {
-      data = JSON.stringify(lines.filter(l => l.type !== 'progress'), null, 2); ext = 'json'
-    } else if (format === 'csv') {
-      const keys = [...new Set(lines.flatMap(Object.keys))].filter(k => k !== '_id')
+    if (fmt === 'json') { data = JSON.stringify(lines.filter(l => l.type !== 'progress'), null, 2); ext = 'json' }
+    else if (fmt === 'csv') {
+      const keys = [...new Set(lines.flatMap(Object.keys))].filter(k => k !== '_id' && k !== '_ts')
       data = [keys.join(','), ...lines.map(l => keys.map(k => JSON.stringify(l[k] ?? '')).join(','))].join('\n'); ext = 'csv'
-    } else {
-      data = lines.map(l => l.message || JSON.stringify(l)).join('\n'); ext = 'txt'
-    }
-    if (window.nexus) { await window.nexus.saveFile(data, `${filename}.${ext}`) }
-    else { const b = new Blob([data]); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${filename}.${ext}`; a.click() }
+    } else { data = lines.map(l => l.message || JSON.stringify(l)).join('\n'); ext = 'txt' }
+    if (window.nexus) await window.nexus.saveFile(data, `${filename}.${ext}`)
+    else { const b = new Blob([data]); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(b), download: `${filename}.${ext}` }); a.click() }
   }
   return (
-    <div className="flex gap-1">
-      {['json', 'csv', 'txt'].map(fmt => (
-        <button key={fmt} onClick={() => exportData(fmt)}
-          className="px-2 py-1 rounded-md text-[10px] font-mono transition-all duration-150 hover:scale-105"
-          style={{ color: 'rgba(167,139,250,0.4)' }}
-          onMouseEnter={e => { e.target.style.color = 'rgba(167,139,250,0.8)'; e.target.style.background = 'rgba(124,58,237,0.08)' }}
-          onMouseLeave={e => { e.target.style.color = 'rgba(167,139,250,0.4)'; e.target.style.background = '' }}>
-          .{fmt}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <span style={{
+        fontSize: 9, color: 'var(--text-5)', marginRight: 5,
+        fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+        fontFamily: "'JetBrains Mono', monospace",
+      }}>Export</span>
+      {['json','csv','txt'].map(f => (
+        <button key={f} onClick={() => go(f)} style={{
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+          padding: '2px 8px', borderRadius: 'var(--r-sm)',
+          color: 'var(--text-4)', background: 'transparent',
+          border: 'none', cursor: 'pointer',
+          transition: 'color 0.1s, background 0.1s',
+          letterSpacing: 0,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--bg-hover)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-4)'; e.currentTarget.style.background = 'transparent' }}>
+          {f}
         </button>
       ))}
     </div>
   )
 }
 
+/* ─── CheckboxField ──────────────────────────────────── */
 export function CheckboxField({ label, checked, onChange }) {
   return (
-    <label className="flex items-center gap-2.5 cursor-pointer group">
-      <div className={`w-3.5 h-3.5 rounded border transition-all flex items-center justify-center
-        ${checked
-          ? 'border-purple-500/60'
-          : 'border-white/12 bg-transparent group-hover:border-purple-500/30'}`}
-        style={checked ? { background: 'linear-gradient(135deg, rgba(124,58,237,0.6), rgba(37,99,235,0.6))' } : {}}>
-        {checked && <span className="text-white text-[9px]">✓</span>}
+    <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
+      <div style={{
+        width: 15, height: 15, borderRadius: 4, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: checked ? 'var(--accent-hi)' : 'transparent',
+        border: `1px solid ${checked ? 'rgba(139,92,246,0.8)' : 'var(--border-strong)'}`,
+        boxShadow: checked ? '0 0 8px rgba(124,58,237,0.4)' : 'none',
+        transition: 'all 0.12s',
+      }}>
+        {checked && <span style={{ color: 'white', fontSize: 9, fontWeight: 800, lineHeight: 1 }}>✓</span>}
       </div>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="hidden" />
-      <span className="text-white/35 text-[12px] group-hover:text-white/60 transition-colors">{label}</span>
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ display: 'none' }} />
+      <span style={{ fontSize: 12, color: 'var(--text-2)', userSelect: 'none' }}>{label}</span>
     </label>
   )
 }
 
+/* ─── ToggleSwitch ───────────────────────────────────── */
 export function ToggleSwitch({ label, checked, onChange, description }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <p className="text-white/70 text-[12px] font-medium">{label}</p>
-        {description && <p className="text-white/25 text-[10px] mt-0.5">{description}</p>}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 450, lineHeight: 1.3 }}>{label}</p>
+        {description && (
+          <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>{description}</p>
+        )}
       </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative w-9 h-5 rounded-full transition-all duration-250 shrink-0`}
-        style={checked
-          ? { background: 'linear-gradient(90deg, #7c3aed, #2563eb)', boxShadow: '0 0 10px rgba(124,58,237,0.4)' }
-          : { background: 'rgba(255,255,255,0.08)' }
-        }
-      >
-        <div
-          className="toggle-thumb absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md"
-          style={{ left: checked ? '18px' : '2px' }}
-        />
+      <button onClick={() => onChange(!checked)} style={{
+        position: 'relative', width: 34, height: 19, borderRadius: 99, flexShrink: 0,
+        background: checked ? 'var(--accent-hi)' : 'var(--bg-raised)',
+        border: `1px solid ${checked ? 'rgba(139,92,246,0.7)' : 'var(--border-strong)'}`,
+        cursor: 'pointer', transition: 'all 0.18s',
+        boxShadow: checked ? '0 0 14px rgba(124,58,237,0.45)' : 'none',
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, width: 13, height: 13,
+          borderRadius: '50%', background: checked ? 'white' : 'var(--text-5)',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          transition: 'left 0.18s, background 0.18s', left: checked ? 16 : 2,
+        }} />
       </button>
     </div>
   )

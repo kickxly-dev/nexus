@@ -1,8 +1,15 @@
 import os
+import sys
 from pathlib import Path
 
 PORT = int(os.environ.get("NEXUS_PORT", 7331))
-BASE_DIR = Path(__file__).parent
+
+# When frozen by PyInstaller, data files sit next to the .exe
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
 DATA_DIR = BASE_DIR / "data"
 WORDLISTS_DIR = DATA_DIR / "wordlists"
 PAYLOADS_DIR = DATA_DIR / "payloads"

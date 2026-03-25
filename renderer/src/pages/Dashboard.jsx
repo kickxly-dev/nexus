@@ -3,287 +3,312 @@ import { useNavigate } from 'react-router-dom'
 import { useActivityStore } from '../store/activityStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { useLogStore } from '../store/logStore'
+import { useAuthStore } from '../store/authStore'
+import { Icon } from '../components/Icons'
 
 const MODULES = [
-  { to: '/recon',    label: 'Reconnaissance',  icon: '◉', count: 7,  desc: 'DNS · WHOIS · Ports · Subdomains · Fingerprint · RevDNS · GeoIP', gradient: 'linear-gradient(135deg, #2563eb, #4f46e5)', glow: 'rgba(37,99,235,0.2)',   border: 'rgba(37,99,235,0.3)',   tag: 'recon' },
-  { to: '/web',      label: 'Web Exploitation', icon: '◈', count: 5,  desc: 'Headers · DirBrute · SQLi · XSS · CORS',                         gradient: 'linear-gradient(135deg, #7c3aed, #6d28d9)', glow: 'rgba(124,58,237,0.2)',  border: 'rgba(124,58,237,0.3)',  tag: 'web' },
-  { to: '/network',  label: 'Network Analysis', icon: '⬡', count: 4,  desc: 'Services · ARP · Mapper · Packet Capture',                       gradient: 'linear-gradient(135deg, #4f46e5, #4338ca)', glow: 'rgba(79,70,229,0.2)',   border: 'rgba(79,70,229,0.3)',   tag: 'network' },
-  { to: '/password', label: 'Password & Auth',  icon: '◆', count: 6,  desc: 'Identify · Crack · Wordlist · Credentials · Encoder · Strength', gradient: 'linear-gradient(135deg, #0891b2, #2563eb)', glow: 'rgba(8,145,178,0.2)',   border: 'rgba(8,145,178,0.3)',   tag: 'password' },
-  { to: '/osint',    label: 'OSINT',            icon: '◎', count: 4,  desc: 'Email Recon · Username Scan · SSL Inspect · Breach Check',       gradient: 'linear-gradient(135deg, #7c3aed, #6366f1)', glow: 'rgba(99,102,241,0.2)',  border: 'rgba(99,102,241,0.3)',  tag: 'osint' },
+  { to: '/recon',    label: 'Reconnaissance',  icon: 'recon',    count: 14, tag: 'recon',
+    hex: '#4a9eff',
+    tools: ['DNS','WHOIS','Port Scan','Subdomains','Fingerprint','Reverse DNS','GeoIP','Traceroute','ASN Lookup','Sub Takeover','Cert Logs','Banner Grab','WAF Detector','CMS Detector'] },
+  { to: '/web',      label: 'Web Exploitation', icon: 'web',      count: 18, tag: 'web',
+    hex: '#a78bfa',
+    tools: ['Headers','Dir Brute','SQLi','XSS','CORS','HTTP Methods','JWT Analyzer','Open Redirect','LFI Scanner','SSRF','Cookie Audit','CSP Analyzer','SSTI','Param Discovery','HTTP Smuggling','Clickjacking','XXE Scanner','SQLMap'] },
+  { to: '/network',  label: 'Network Analysis', icon: 'network',  count: 8,  tag: 'network',
+    hex: '#00d4ff',
+    tools: ['Services','ARP Scan','Net Map','Capture','Ping Sweep','SMB Enum','SSH Audit','Nmap Raw'] },
+  { to: '/password', label: 'Password & Auth',  icon: 'password', count: 8,  tag: 'password',
+    hex: '#00d084',
+    tools: ['Identify','Crack','Wordlist','Credentials','Encoder','Strength','Hash Lookup','JWT Cracker'] },
+  { to: '/osint',    label: 'OSINT',            icon: 'osint',    count: 8,  tag: 'osint',
+    hex: '#ff69b4',
+    tools: ['Email Recon','Username','SSL Inspect','Breach Check','IP Reputation','Reverse IP','GitHub Dork','Shodan'] },
+  { to: '/advanced', label: 'Advanced Tools',   icon: 'terminal', count: 6,  tag: 'advanced',
+    hex: '#ff7a00',
+    tools: ['Nuclei Scanner','Nmap Raw','SQLMap','Clickjacking','XXE Scanner','Script Runner'] },
 ]
 
-const MODULE_COLORS = {
-  recon:    { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
-  web:      { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  network:  { color: '#818cf8', bg: 'rgba(129,140,248,0.12)' },
-  password: { color: '#22d3ee', bg: 'rgba(34,211,238,0.12)'  },
-  osint:    { color: '#a5b4fc', bg: 'rgba(165,180,252,0.12)' },
+function fmtUptime(s) {
+  if (s < 60)   return `${s}s`
+  if (s < 3600) return `${Math.floor(s/60)}m ${s%60}s`
+  return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`
 }
 
-const TIPS = [
-  'Press Ctrl+Shift+A to open the hidden admin panel',
-  'OSINT Breach Check uses k-anonymity — your passwords never leave the machine',
-  'Export any scan results as JSON, CSV, or TXT',
-  'Username scanner checks 12 platforms simultaneously',
-  'SSL Inspector detects weak ciphers and expiring certificates',
-  'Settings page lets you persist default wordlist paths and timeouts',
-  'Only scan targets you have explicit authorization for',
-]
-
-// Simple SVG bar chart
-function MiniBarChart({ data }) {
-  if (!data.length) return (
-    <div className="h-full flex items-center justify-center">
-      <p className="text-white/8 text-[11px] font-mono">no data yet</p>
-    </div>
-  )
-  const max = Math.max(...data.map(d => d.value), 1)
+function StatCard({ icon, color, label, value, sub }) {
   return (
-    <div className="flex items-end gap-2 h-full px-2 pb-1 pt-2">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-          <span className="text-[8px] font-mono opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: d.color }}>{d.value}</span>
-          <div className="w-full rounded-t transition-all duration-700 ease-out"
-            style={{
-              height: `${Math.max((d.value / max) * 80, d.value > 0 ? 4 : 0)}%`,
-              background: `linear-gradient(to top, ${d.color}40, ${d.color}80)`,
-              boxShadow: d.value > 0 ? `0 0 8px ${d.color}40` : 'none',
-              minHeight: d.value > 0 ? '4px' : '1px',
-            }} />
-          <span className="text-[8px] font-mono text-white/20 truncate w-full text-center">{d.label}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// Donut chart (SVG)
-function DonutChart({ data, total }) {
-  if (!total) return (
-    <div className="flex items-center justify-center h-full">
-      <p className="text-white/8 text-[10px] font-mono">no scans yet</p>
-    </div>
-  )
-  const r = 40, cx = 56, cy = 56, circumference = 2 * Math.PI * r
-  let offset = 0
-  const segments = data.filter(d => d.value > 0).map(d => {
-    const len = (d.value / total) * circumference
-    const seg = { ...d, offset, len }
-    offset += len
-    return seg
-  })
-
-  return (
-    <div className="flex items-center gap-4 h-full px-2">
-      <svg width="112" height="112" viewBox="0 0 112 112" className="shrink-0">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="12" />
-        {segments.map((s, i) => (
-          <circle key={i} cx={cx} cy={cy} r={r} fill="none"
-            stroke={s.color} strokeWidth="12"
-            strokeDasharray={`${s.len} ${circumference - s.len}`}
-            strokeDashoffset={-s.offset}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'all 0.8s ease' }} />
-        ))}
-        <text x={cx} y={cy - 6} textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="8">scans</text>
-      </svg>
-      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-        {data.filter(d => d.value > 0).map((d, i) => (
-          <div key={i} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-              <span className="text-[10px] text-white/30 truncate">{d.label}</span>
-            </div>
-            <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: d.color }}>{d.value}</span>
-          </div>
-        ))}
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--r-xl)',
+      padding: '16px 18px',
+      display: 'flex', alignItems: 'flex-start', gap: 14,
+      transition: 'border-color 0.15s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        background: `${color}12`,
+        border: `1px solid ${color}25`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color,
+      }}>
+        <Icon name={icon} size={16} />
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <p style={{
+          fontSize: 9, color: 'var(--text-4)', marginBottom: 5,
+          textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700,
+        }}>{label}</p>
+        <p style={{
+          fontSize: 22, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1,
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em',
+        }}>{value}</p>
+        {sub && <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 4 }}>{sub}</p>}
       </div>
     </div>
   )
 }
 
+function ModuleCard({ mod, scans, onClick }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'stretch', textAlign: 'left', cursor: 'pointer',
+        borderRadius: 'var(--r-xl)', overflow: 'hidden',
+        background: hover
+          ? `radial-gradient(ellipse at top left, ${mod.hex}16 0%, transparent 65%), var(--bg-surface)`
+          : `radial-gradient(ellipse at top left, ${mod.hex}0a 0%, transparent 65%), var(--bg-surface)`,
+        border: `1px solid ${hover ? mod.hex + '35' : 'var(--border)'}`,
+        boxShadow: hover
+          ? `0 0 28px ${mod.hex}18, 0 8px 24px rgba(0,0,0,0.5)`
+          : '0 2px 8px rgba(0,0,0,0.3)',
+        transition: 'all 0.18s',
+        transform: hover ? 'translateY(-2px)' : 'none',
+      }}>
+      {/* Color accent strip */}
+      <div style={{
+        width: 3, background: mod.hex, flexShrink: 0,
+        opacity: hover ? 1 : 0.3, transition: 'opacity 0.18s',
+        boxShadow: hover ? `0 0 12px ${mod.hex}` : 'none',
+      }} />
+      <div style={{ flex: 1, padding: '16px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: 9,
+              background: `${mod.hex}15`,
+              border: `1px solid ${mod.hex}30`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: mod.hex,
+            }}>
+              <Icon name={mod.icon} size={15} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', letterSpacing: '-0.018em' }}>
+              {mod.label}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {scans > 0 && (
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 0,
+                padding: '2px 7px', borderRadius: 99,
+                color: mod.hex, background: `${mod.hex}15`,
+                border: `1px solid ${mod.hex}30`, fontWeight: 600,
+              }}>{scans} runs</span>
+            )}
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+              color: 'var(--text-5)', letterSpacing: 0, fontWeight: 600,
+            }}>{mod.count}</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 4px' }}>
+          {mod.tools.map(t => (
+            <span key={t} style={{
+              fontSize: 10, color: 'var(--text-3)',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-sm)', padding: '1px 6px',
+              letterSpacing: '-0.01em',
+            }}>{t}</span>
+          ))}
+        </div>
+      </div>
+    </button>
+  )
+}
+
 export function Dashboard() {
-  const navigate     = useNavigate()
-  const activities   = useActivityStore((s) => s.activities)
-  const pythonStatus = useSettingsStore((s) => s.pythonStatus)
-  const addLog       = useLogStore((s) => s.addLog)
-  const [tip]        = useState(() => TIPS[Math.floor(Math.random() * TIPS.length)])
+  const navigate   = useNavigate()
+  const activities = useActivityStore(s => s.activities)
+  const pyStatus   = useSettingsStore(s => s.pythonStatus)
+  const addLog     = useLogStore(s => s.addLog)
+  const user       = useAuthStore(s => s.currentUser)
   const [uptime, setUptime] = useState(0)
 
   useEffect(() => {
-    const start = Date.now()
-    const t = setInterval(() => setUptime(Math.floor((Date.now() - start) / 1000)), 1000)
+    const t0 = Date.now()
+    const t = setInterval(() => setUptime(Math.floor((Date.now() - t0) / 1000)), 1000)
     return () => clearInterval(t)
   }, [])
 
-  const fmtUptime = (s) => {
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
-    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`
-  }
-
-  function handleModuleClick(mod) {
-    addLog('module_open', { module: mod.label })
-    navigate(mod.to)
-  }
-
-  // Chart data
-  const moduleCounts = ['recon','web','network','password','osint'].map(m => ({
-    label: m, value: activities.filter(a => a.module === m).length,
-    color: MODULE_COLORS[m].color,
-  }))
-
-  const donutData = moduleCounts.filter(m => m.value > 0)
+  const last   = activities[0]
+  const online = pyStatus === 'online'
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#08080f' }}>
-      <div className="absolute inset-0 grid-bg-fine opacity-50 pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[250px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center top, rgba(124,58,237,0.07), transparent 70%)' }} />
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-app)' }}>
+      <div style={{ maxWidth: 900, padding: '28px 28px 48px', display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-      <div className="relative flex flex-col h-full">
-        {/* Header */}
-        <div className="px-8 pt-6 pb-4 flex items-center justify-between">
-          <div className="slide-up">
-            <h1 className="text-2xl font-black text-white tracking-tight shimmer-text mb-0.5">Dashboard</h1>
-            <p className="text-white/20 text-[13px]">
-              Security toolkit — <span className="text-purple-400/60 font-mono">{activities.length}</span> scans · <span className="text-blue-400/60 font-mono">26</span> tools
+        {/* ── Header ── */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.1, letterSpacing: '-0.035em' }}>
+              {user ? `Welcome back, ${user.username}` : 'Dashboard'}
+            </h1>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
+              Nexus Security Toolkit · 64 tools across 6 modules
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-purple-500/15 bg-purple-500/5">
-            <div className={`w-1.5 h-1.5 rounded-full ${pythonStatus === 'online' ? 'bg-purple-400 dot-glow text-purple-400' : pythonStatus === 'offline' ? 'bg-red-400' : 'bg-blue-400 animate-pulse'}`} />
-            <span className={`text-[10px] font-mono font-bold ${pythonStatus === 'online' ? 'text-purple-300' : pythonStatus === 'offline' ? 'text-red-400' : 'text-blue-400'}`}>
-              ENGINE {pythonStatus?.toUpperCase()}
-            </span>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '6px 14px', borderRadius: 99, flexShrink: 0,
+            background: online ? 'rgba(0,208,132,0.07)' : 'rgba(255,71,87,0.07)',
+            border: `1px solid ${online ? 'rgba(0,208,132,0.2)' : 'rgba(255,71,87,0.2)'}`,
+          }}>
+            <span style={{
+              width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+              background: online ? 'var(--green)' : 'var(--red)',
+              boxShadow: online ? '0 0 8px rgba(0,208,132,0.7)' : 'none',
+            }} className={online ? 'pulse-dot' : ''} />
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: '0.04em',
+              color: online ? 'rgba(0,208,132,0.9)' : 'rgba(255,71,87,0.9)',
+              fontWeight: 500,
+            }}>{pyStatus}</span>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="px-8 grid grid-cols-4 gap-3 mb-4">
-          {[
-            { label: 'Engine',      value: pythonStatus, color: pythonStatus === 'online' ? 'text-purple-300' : pythonStatus === 'offline' ? 'text-red-400' : 'text-blue-400', mono: false },
-            { label: 'Uptime',      value: fmtUptime(uptime), color: 'text-white/50', mono: true },
-            { label: 'Total Scans', value: activities.length, color: 'text-white', mono: false },
-            { label: 'Tools',       value: '26', color: 'text-white', mono: false },
-          ].map((s, i) => (
-            <div key={i} className="glow-card p-3.5 rounded-xl bg-white/[0.02] scale-in" style={{ animationDelay: `${i*50}ms` }}>
-              <p className="text-white/15 text-[10px] font-medium uppercase tracking-wider mb-1.5">{s.label}</p>
-              <p className={`text-sm font-bold ${s.mono ? 'font-mono' : ''} ${s.color}`}>{s.value}</p>
-            </div>
-          ))}
+        {/* ── Stats ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+          <StatCard icon="terminal"  color="#8b5cf6" label="Total Scans"  value={String(activities.length)} sub="this session" />
+          <StatCard icon="dashboard" color="#4a9eff" label="Session Time" value={fmtUptime(uptime)}          sub="since launch"  />
+          <StatCard icon="recon"     color="#00d084" label="Tools Ready"  value="64"                         sub="6 modules"     />
+          <StatCard icon="settings"  color="#ffd700" label="Last Scan"
+            value={last ? new Date(last.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—'}
+            sub={last?.tool || 'none yet'} />
         </div>
 
-        {/* Main content: Modules + Charts */}
-        <div className="px-8 flex gap-4 flex-1 min-h-0 mb-4">
-          {/* Module cards */}
-          <div className="flex-1 flex flex-col gap-3">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/15 font-semibold">Modules</p>
-            <div className="grid grid-cols-2 gap-2.5 flex-1">
-              {MODULES.map((mod, i) => (
-                <button key={mod.to} onClick={() => handleModuleClick(mod)}
-                  className="relative overflow-hidden flex items-start gap-3.5 p-4 rounded-xl text-left group cursor-pointer scale-in"
-                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', transition: 'all 0.2s ease', animationDelay: `${i*60}ms` }}
-                  onMouseEnter={e => { e.currentTarget.style.border = `1px solid ${mod.border}`; e.currentTarget.style.boxShadow = `0 0 20px ${mod.glow}, 0 4px 16px rgba(0,0,0,0.3)`; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.05)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}>
-
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400"
-                    style={{ background: `radial-gradient(ellipse at top left, ${mod.glow}, transparent 60%)` }} />
-
-                  <div className="relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300"
-                    style={{ background: mod.gradient }}>
-                    <span className="text-white text-base">{mod.icon}</span>
-                  </div>
-
-                  <div className="relative flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <h3 className="text-white font-bold text-[13px]">{mod.label}</h3>
-                      <div className="flex items-center gap-1">
-                        {activities.filter(a => a.module === mod.tag).length > 0 && (
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ color: MODULE_COLORS[mod.tag].color, background: MODULE_COLORS[mod.tag].bg }}>
-                            {activities.filter(a => a.module === mod.tag).length}
-                          </span>
-                        )}
-                        <span className="text-[9px] font-mono text-white/15 bg-white/[0.04] px-1.5 py-0.5 rounded-full">{mod.count}</span>
-                      </div>
-                    </div>
-                    <p className="text-white/18 text-[10px] leading-relaxed">{mod.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+        {/* ── Modules ── */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Modules</h2>
+            <span style={{ fontSize: 10, color: 'var(--text-5)', fontFamily: "'JetBrains Mono', monospace" }}>click to open →</span>
           </div>
-
-          {/* Right panel: Charts + Activity */}
-          <div className="w-64 flex flex-col gap-3 shrink-0">
-            {/* Bar chart */}
-            <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] overflow-hidden">
-              <div className="px-3 py-2 border-b border-white/[0.04]">
-                <p className="text-[10px] uppercase tracking-[0.15em] text-white/15 font-semibold">Scans by Module</p>
-              </div>
-              <div className="h-28">
-                <MiniBarChart data={moduleCounts} />
-              </div>
-            </div>
-
-            {/* Donut chart */}
-            <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] overflow-hidden">
-              <div className="px-3 py-2 border-b border-white/[0.04]">
-                <p className="text-[10px] uppercase tracking-[0.15em] text-white/15 font-semibold">Distribution</p>
-              </div>
-              <div className="h-28">
-                <DonutChart data={moduleCounts} total={activities.length} />
-              </div>
-            </div>
-
-            {/* Tip */}
-            <div className="p-3.5 rounded-xl border flex-1"
-              style={{ background: 'rgba(124,58,237,0.04)', borderColor: 'rgba(124,58,237,0.12)' }}>
-              <p className="text-purple-400/50 text-[9px] font-bold uppercase tracking-widest mb-1.5 font-mono">Tip</p>
-              <p className="text-white/25 text-[11px] leading-relaxed">{tip}</p>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {MODULES.map(mod => (
+              <ModuleCard key={mod.to} mod={mod}
+                scans={activities.filter(a => a.module === mod.tag).length}
+                onClick={() => { addLog('module_open', { module: mod.label }); navigate(mod.to) }} />
+            ))}
           </div>
         </div>
 
-        {/* Activity feed */}
-        <div className="px-8 pb-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/15 font-semibold">Recent Activity</p>
+        {/* ── Recent Activity ── */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Recent Activity</h2>
             {activities.length > 0 && (
               <button onClick={() => useActivityStore.getState().clearActivities()}
-                className="text-white/10 text-[10px] hover:text-white/35 transition-colors">clear</button>
+                style={{
+                  fontSize: 10, color: 'var(--text-4)', background: 'none', border: 'none',
+                  cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0,
+                  transition: 'color 0.1s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-4)'}>
+                clear all
+              </button>
             )}
           </div>
-          <div className="rounded-xl border border-white/[0.05] overflow-hidden bg-white/[0.01]">
+
+          <div style={{
+            borderRadius: 'var(--r-xl)', overflow: 'hidden',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-surface)',
+          }}>
             {activities.length === 0 ? (
-              <div className="py-4 flex items-center justify-center">
-                <p className="text-white/8 text-[11px] font-mono">no scans yet — run a tool to see activity here</p>
+              <div style={{ padding: '56px 0', textAlign: 'center' }}>
+                <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'var(--text-4)', letterSpacing: 0 }}>
+                  $ no scans yet
+                </p>
+                <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: 'var(--text-5)', marginTop: 8, letterSpacing: 0 }}>
+                  open a module and run a tool to get started
+                </p>
               </div>
             ) : (
-              <div className="flex overflow-x-auto">
-                {activities.slice(0, 12).map((a) => (
-                  <div key={a.id} className="flex flex-col items-start px-3 py-2 border-r border-white/[0.04] last:border-0 min-w-[120px] hover:bg-white/[0.02] transition-colors">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`text-[9px] font-bold font-mono px-1.5 py-[1px] rounded
-                        ${a.module === 'recon'    ? 'text-blue-400 bg-blue-400/10' :
-                          a.module === 'web'      ? 'text-purple-400 bg-purple-400/10' :
-                          a.module === 'network'  ? 'text-indigo-400 bg-indigo-400/10' :
-                          a.module === 'osint'    ? 'text-violet-400 bg-violet-400/10' :
-                          'text-cyan-400 bg-cyan-400/10'}`}>
-                        {a.module}
-                      </span>
-                    </div>
-                    <p className="text-white/40 text-[11px] font-medium truncate w-full">{a.tool}</p>
-                    <p className="text-white/15 text-[10px] font-mono truncate w-full">{a.target || '—'}</p>
-                    <p className="text-white/8 text-[9px] mt-0.5">
-                      {new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['Module','Tool','Target','Time'].map(h => (
+                      <th key={h} style={{
+                        textAlign: 'left', fontSize: 9, fontWeight: 700,
+                        color: 'var(--text-5)', textTransform: 'uppercase',
+                        letterSpacing: '0.1em', padding: '10px 16px',
+                        background: 'var(--bg-raised)',
+                        borderBottom: '1px solid var(--border)',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.slice(0,10).map((a, i, arr) => {
+                    const mod = MODULES.find(m => m.tag === a.module)
+                    return (
+                      <tr key={a.id}
+                        style={{ borderBottom: i < arr.length-1 ? '1px solid var(--border)' : 'none', transition: 'background 0.1s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+                            fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                            padding: '2px 8px', borderRadius: 'var(--r-sm)',
+                            color: mod?.hex || 'var(--text-2)',
+                            background: `${mod?.hex || '#888'}15`,
+                            border: `1px solid ${mod?.hex || '#888'}25`,
+                          }}>{a.module}</span>
+                        </td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: 'var(--text-1)', fontWeight: 500 }}>{a.tool}</td>
+                        <td style={{
+                          padding: '10px 16px', fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 11, color: 'var(--text-3)', letterSpacing: 0,
+                          maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{a.target || '—'}</td>
+                        <td style={{
+                          padding: '10px 16px', fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 11, color: 'var(--text-4)', letterSpacing: 0, whiteSpace: 'nowrap',
+                        }}>
+                          {new Date(a.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
+
+        <p style={{
+          fontSize: 9, color: 'var(--text-5)', textAlign: 'center',
+          fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.03em',
+        }}>
+          only scan targets you own or have explicit written permission to test
+        </p>
       </div>
     </div>
   )

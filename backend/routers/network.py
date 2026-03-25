@@ -7,6 +7,10 @@ from modules.network.service_detect import detect_services
 from modules.network.arp_scanner import arp_scan
 from modules.network.net_mapper import map_network
 from modules.network.packet_info import capture_packets
+from modules.network.ping_sweep import ping_sweep
+from modules.network.smb_enum import smb_enum
+from modules.network.ssh_audit import ssh_audit
+from modules.network.nmap_raw import nmap_raw
 import asyncio
 
 router = APIRouter(prefix="/api/network", tags=["network"])
@@ -45,3 +49,24 @@ async def capture(
 ):
     count = min(count, 500)  # safety cap
     return stream_response(capture_packets(iface, count, filter))
+
+
+@router.get("/pingsweep")
+async def pingsweep(network: str = Query(...)):
+    validate_ip_or_cidr(network)
+    return stream_response(ping_sweep(network))
+
+
+@router.get("/smb")
+async def smb(target: str = Query(...)):
+    return stream_response(smb_enum(target))
+
+
+@router.get("/ssh")
+async def ssh(target: str = Query(...), port: int = Query(22)):
+    return stream_response(ssh_audit(target, port))
+
+
+@router.get("/nmap")
+async def nmap(target: str = Query(...), flags: str = Query("-sV --script=default")):
+    return stream_response(nmap_raw(target, flags))

@@ -1,0 +1,41 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.nexus.security
+productName: Nexus
+copyright: Nexus Security Toolkit — Authorized Use Only
+asar: true
+asarUnpack: []
+files:
+  - filter:
+      - electron/**/*
+      - renderer/dist/**/*
+extraResources:
+  - from: backend/dist/nexus-backend.exe
+    to: backend/nexus-backend.exe
+  - from: backend/data
+    to: backend/data
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Nexus
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+mac:
+  target: dmg
+linux:
+  target: AppImage
+publish:
+  provider: github
+  owner: kickxly-dev
+  repo: nexus
+electronVersion: 28.3.3

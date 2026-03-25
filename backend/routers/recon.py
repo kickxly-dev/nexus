@@ -8,6 +8,13 @@ from modules.recon.subdomain import enumerate_subdomains
 from modules.recon.tech_fingerprint import fingerprint
 from modules.recon.reverse_dns import reverse_dns
 from modules.recon.ip_geolocation import ip_geolocation
+from modules.recon.traceroute import traceroute
+from modules.recon.asn_lookup import asn_lookup
+from modules.recon.subdomain_takeover import subdomain_takeover
+from modules.recon.cert_transparency import cert_transparency
+from modules.recon.banner_grab import banner_grab
+from modules.recon.waf_detector import waf_detect
+from modules.recon.cms_detector import cms_detect
 
 router = APIRouter(prefix="/api/recon", tags=["recon"])
 
@@ -57,3 +64,42 @@ async def rev_dns(ip: str = Query(...)):
 @router.get("/geoip")
 async def geoip(ip: str = Query(...)):
     return stream_response(ip_geolocation(ip))
+
+
+@router.get("/traceroute")
+async def trace(target: str = Query(...), max_hops: int = Query(30)):
+    return stream_response(traceroute(target, max_hops))
+
+
+@router.get("/asn")
+async def asn(target: str = Query(...)):
+    return stream_response(asn_lookup(target))
+
+
+@router.get("/takeover")
+async def takeover(domain: str = Query(...)):
+    domain = validate_domain(domain)
+    return stream_response(subdomain_takeover(domain))
+
+
+@router.get("/certtransparency")
+async def cert_trans(domain: str = Query(...)):
+    domain = validate_domain(domain)
+    return stream_response(cert_transparency(domain))
+
+
+@router.get("/bannergrab")
+async def banner(target: str = Query(...), ports: str = Query("22,80,443,8080")):
+    return stream_response(banner_grab(target, ports))
+
+
+@router.get("/waf")
+async def waf(url: str = Query(...)):
+    url = validate_url(url)
+    return stream_response(waf_detect(url))
+
+
+@router.get("/cms")
+async def cms(url: str = Query(...)):
+    url = validate_url(url)
+    return stream_response(cms_detect(url))
